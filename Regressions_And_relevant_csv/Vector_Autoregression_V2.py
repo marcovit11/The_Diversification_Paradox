@@ -1,8 +1,9 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[9]:
-
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import warnings
+from statsmodels.tsa.stattools import adfuller, kpss   # stationarity tests
+from statsmodels.tsa.vector_ar.var_model import VAR     # VAR estimator
 
 # ═══════════════════════════════════════════════════════════════════════
 # VAR NOTEBOOK — Diversification Paradox
@@ -16,20 +17,8 @@
 # macro, ETF flows respond to attention, and prices are the final outcome
 # ═══════════════════════════════════════════════════════════════════════
 
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import warnings
-
 # Suppress KPSS interpolation warnings (cosmetic only — not an error)
 warnings.filterwarnings("ignore", category=UserWarning)
-
-from statsmodels.tsa.stattools import adfuller, kpss   # stationarity tests
-from statsmodels.tsa.vector_ar.var_model import VAR     # VAR estimator
-
-
-# In[13]:
-
 
 # ═══════════════════════════════════════════════════════════════════════
 # DATA LOAD & MERGE
@@ -60,10 +49,6 @@ df = df.sort_values("date").reset_index(drop=True)
 
 print(f"Merged shape: {df.shape}")   # expect 121 rows × 8+ columns
 print(df.head())                     # visual check: dates start Dec 2015
-
-
-# In[14]:
-
 
 # ═══════════════════════════════════════════════════════════════════════
 # PRE-ESTIMATION: STATIONARITY TESTS
@@ -99,10 +84,6 @@ for name in all_vars:
     status = "✅" if r[1] > 0.05 else "⚠️  CHECK — possible unit root"
     print(f"{name:<12} | stat: {r[0]:8.3f} | p: {r[1]:.4f} | {status}")
 
-
-# In[15]:
-
-
 # ═══════════════════════════════════════════════════════════════════════
 # SAMPLE CHECK
 # ═══════════════════════════════════════════════════════════════════════
@@ -117,10 +98,6 @@ var_df = df[all_vars + ["date"]].dropna().copy()
 print(f"Final sample: {len(var_df)} observations")          # expect 121 (Dec 2015 – Dec 2025)
 print(f"Date range:   {var_df['date'].min().date()} → {var_df['date'].max().date()}")
 print(f"Missing values:\n{var_df[all_vars].isnull().sum()}")  # must all be 0
-
-
-# In[16]:
-
 
 # ═══════════════════════════════════════════════════════════════════════
 # HELPER FUNCTION — run_var()
@@ -283,30 +260,13 @@ def run_var(var_name, flow_col, data=None):
 
     return results  # return results object for further querying if needed
 
-
-# In[17]:
-
-
 # ═══════════════════════════════════════════════════════════════════════
 # PRIMARY RUNS — ASVI8, FULL SAMPLE (Dec 2015 – Dec 2025)
 # ═══════════════════════════════════════════════════════════════════════
 
 results_spy = run_var("VAR-SPY", "flow_spy")
-
-
-# In[18]:
-
-
 results_rsp = run_var("VAR-RSP", "flow_rsp")
-
-
-# In[19]:
-
-
 results_voo = run_var("VAR-VOO", "flow_voo")
-
-
-# In[20]:
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -324,22 +284,5 @@ var_df_2021 = var_df[var_df["date"] >= "2021-01-31"].copy()
 print(f"2021+ subsample: {len(var_df_2021)} observations")  # expect ~60
 
 results_spy_2021 = run_var("VAR-SPY 2021+", "flow_spy", data=var_df_2021)
-
-
-# In[21]:
-
-
 results_rsp_2021 = run_var("VAR-RSP 2021+", "flow_rsp", data=var_df_2021)
-
-
-# In[22]:
-
-
 results_voo_2021 = run_var("VAR-VOO 2021+", "flow_voo", data=var_df_2021)
-
-
-# In[ ]:
-
-
-
-
