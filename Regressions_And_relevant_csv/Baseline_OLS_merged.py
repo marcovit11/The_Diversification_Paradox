@@ -1,7 +1,9 @@
-import pandas as pd
-import numpy as np
-import statsmodels.api as sm
+import pandas as pd #used for tabular data
+import numpy #dependency for statsmodels
+import statsmodels.api as sm #provides regression engine 
+import pickle # to make this able to be queried 
 
+#read in CSV data
 spy = pd.read_csv("spy_clean.csv", parse_dates=["date"])
 voo = pd.read_csv("voo_clean.csv", parse_dates=["date"])
 rsp = pd.read_csv("rsp_clean.csv", parse_dates=["date"])
@@ -11,575 +13,81 @@ asvi4 = pd.read_csv("AIStocks_ASVI4_Monthly.csv", parse_dates=["date"])
 asvi8 = pd.read_csv("AIStocks_ASVI8_Monthly.csv", parse_dates=["date"])
 mag7 = pd.read_csv("mag7_clean.csv", parse_dates=["date"])
 
-
-spy.shape, voo.shape, rsp.shape, vix.shape, y10.shape, asvi4.shape, asvi8.shape, mag7.shape
-
+#sequential inner merges: align rows by matching date values, keep only dates from both data frames.
 df = spy.merge(rsp, on="date", how="inner", suffixes=("_spy", "_rsp"))
-df = df.merge(voo, on="date", how="inner")
-df = df.merge(vix,  on="date", how="inner")
-df = df.merge(y10,  on="date", how="inner")
-df = df.merge(asvi4, on="date", how="inner")
-df = df.merge(asvi8, on="date", how="inner")
-df = df.merge(mag7, on="date", how="inner")
+#chain of merges, keeping only dates present across all sources 
+for frame in [voo,vix,y10, asvi4,asvi8, mag7]:
+    df = df.merge(frame, on="date", how="inner")
 
-df.head(10)
+#this moves every value down one row, creates a one period lag 
+for col in ["ASVI4", "ASVI8", "flow_spy", "flow_voo", "flow_rsp", "mag7_ret"]:
+    df[f"{col}_lag"] = df[col].shift(1)
 
-df.shape
-
-df["ASVI4_lag"] = df["ASVI4"].shift(1)
-df["ASVI8_lag"] = df["ASVI8"].shift(1)
-df["flow_spy_lag"] = df["flow_spy"].shift(1)
-df["flow_voo_lag"] = df["flow_voo"].shift(1)
-df["flow_rsp_lag"] = df["flow_rsp"].shift(1)
-df["mag7_ret_lag"] = df["mag7_ret"].shift(1)
-
+#drop the NaN at the top if each lag col
 df = df.dropna()
 
-df.shape
-
-#SPY as dependent variable
-#2016-2025
-
-Y = df["flow_spy"]
-
-X = df[["ASVI4_lag", "dlog_vix", "dy10"]]
-X = sm.add_constant(X)
-
-model1 = sm.OLS(Y, X).fit(cov_type="HC3")
-print(model1.summary())
-
-df_2020 = df[df["date"] >= "2020-01-31"].copy()
-df_2021 = df[df["date"] >= "2021-01-31"].copy()
-df_2022 = df[df["date"] >= "2022-01-31"].copy()
-df_2023 = df[df["date"] >= "2023-01-31"].copy()
-df_2024 = df[df["date"] >= "2024-01-31"].copy()
-
-#2020 Flow OLS
-
-Y = df_2020["flow_spy"]
-X = sm.add_constant(df_2020[["ASVI4_lag", "dlog_vix", "dy10"]])
-model_2020 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2020.summary())
-
-#2021 Flow OLS
-
-Y = df_2021["flow_spy"]
-X = sm.add_constant(df_2021[["ASVI4_lag", "dlog_vix", "dy10"]])
-model_2021 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2021.summary())
-
-#2022 Flow OLS
-
-Y = df_2022["flow_spy"]
-X = sm.add_constant(df_2022[["ASVI4_lag", "dlog_vix", "dy10"]])
-model_2022 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2022.summary())
-
-#2023 Flow OLS
-
-Y = df_2023["flow_spy"]
-X = sm.add_constant(df_2023[["ASVI4_lag", "dlog_vix", "dy10"]])
-model_2023 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2023.summary())
-
-#RSP as dependent variable
-#2016-2025
-
-Y = df["flow_rsp"]
-X = df[["ASVI4_lag", "dlog_vix", "dy10"]]
-X = sm.add_constant(X)
-model1 = sm.OLS(Y, X).fit(cov_type="HC3")
-print(model1.summary())
-
-#2020 RSP Flow OLS
-
-Y = df_2020["flow_rsp"]
-X = sm.add_constant(df_2020[["ASVI4_lag", "dlog_vix", "dy10"]])
-model_2020 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2020.summary())
-
-#2021 RSP Flow OLS
-
-Y = df_2021["flow_rsp"]
-X = sm.add_constant(df_2021[["ASVI4_lag", "dlog_vix", "dy10"]])
-model_2021 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2021.summary())
-
-#2022 RSP Flow OLS
-
-Y = df_2022["flow_rsp"]
-X = sm.add_constant(df_2022[["ASVI4_lag", "dlog_vix", "dy10"]])
-model_2022 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2022.summary())
-
-#2023 RSP Flow OLS
-
-Y = df_2023["flow_rsp"]
-X = sm.add_constant(df_2023[["ASVI4_lag", "dlog_vix", "dy10"]])
-model_2023 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2023.summary())
-
-#Mag7 Returns SPY OLS 2016-2025
-
-Y = df["mag7_ret"]
-X = df[["flow_spy_lag", "dlog_vix", "dy10"]]
-X = sm.add_constant(X)
-
-model2 = sm.OLS(Y, X).fit(cov_type="HC3")
-print(model2.summary())
-
-#2020 Mag7 Ret SPY OLS
-
-Y = df_2020["mag7_ret"]
-X = sm.add_constant(df_2020[["flow_spy_lag", "dlog_vix", "dy10"]])
-model_2020 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2020.summary())
-
-#2021 Mag7 Ret SPY OLS
-
-Y = df_2021["mag7_ret"]
-X = sm.add_constant(df_2021[["flow_spy_lag", "dlog_vix", "dy10"]])
-model_2021 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2021.summary())
-
-#2022 Mag7 Ret SPY OLS
-
-Y = df_2022["mag7_ret"]
-X = sm.add_constant(df_2022[["flow_spy_lag", "dlog_vix", "dy10"]])
-model_2022 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2022.summary())
-
-#2023 Mag7 Ret SPY OLS
-
-Y = df_2023["mag7_ret"]
-X = sm.add_constant(df_2023[["flow_spy_lag", "dlog_vix", "dy10"]])
-model_2023 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2023.summary())
-
-#Mag7 Returns RSP OLS 2016-2025
-
-Y = df["mag7_ret"]
-X = df[["flow_rsp_lag", "dlog_vix", "dy10"]]
-X = sm.add_constant(X)
-
-model2 = sm.OLS(Y, X).fit(cov_type="HC3")
-print(model2.summary())
-
-#2020 Mag7 Ret RSP OLS
-
-Y = df_2020["mag7_ret"]
-X = sm.add_constant(df_2020[["flow_rsp_lag", "dlog_vix", "dy10"]])
-model_2020 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2020.summary())
-
-#2021 Mag7 Ret RSP OLS
-
-Y = df_2021["mag7_ret"]
-X = sm.add_constant(df_2021[["flow_rsp_lag", "dlog_vix", "dy10"]])
-model_2021 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2021.summary())
-
-#2022 Mag7 Ret RSP OLS
-
-Y = df_2022["mag7_ret"]
-X = sm.add_constant(df_2022[["flow_rsp_lag", "dlog_vix", "dy10"]])
-model_2022 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2022.summary())
-
-#2023 Mag7 Ret RSP OLS
-
-Y = df_2023["mag7_ret"]
-X = sm.add_constant(df_2023[["flow_rsp_lag", "dlog_vix", "dy10"]])
-model_2023 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2023.summary())
-
-#ASVI lagged Mag7_ret OLS 2016-2025
-
-Y = df["ASVI4"]
-X = df[["mag7_ret_lag", "dlog_vix", "dy10"]]
-X = sm.add_constant(X)
-
-model2 = sm.OLS(Y, X).fit(cov_type="HC3")
-print(model2.summary())
-
-#2020 ASVI lagged Mag7_ret OLS
-
-Y = df_2020["ASVI4"]
-X = sm.add_constant(df_2020[["mag7_ret_lag", "dlog_vix", "dy10"]])
-model_2020 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2020.summary())
-
-#2021 ASVI lagged Mag7_ret OLS
-
-Y = df_2021["ASVI4"]
-X = sm.add_constant(df_2021[["mag7_ret_lag", "dlog_vix", "dy10"]])
-model_2021 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2021.summary())
-
-#2022 ASVI lagged Mag7_ret OLS
-
-Y = df_2022["ASVI4"]
-X = sm.add_constant(df_2022[["mag7_ret_lag", "dlog_vix", "dy10"]])
-model_2022 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2022.summary())
-
-#2023 ASVI lagged Mag7_ret OLS
-
-Y = df_2023["ASVI4"]
-X = sm.add_constant(df_2023[["mag7_ret_lag", "dlog_vix", "dy10"]])
-model_2023 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2023.summary())
-
-#VOO as dependent variable
-#2016-2025
-
-Y = df["flow_voo"]
-
-X = df[["ASVI4_lag", "dlog_vix", "dy10"]]
-X = sm.add_constant(X)
-
-model1 = sm.OLS(Y, X).fit(cov_type="HC3")
-print(model1.summary())
-
-#2020 VOO Flow OLS
-
-Y = df_2020["flow_voo"]
-X = sm.add_constant(df_2020[["ASVI4_lag", "dlog_vix", "dy10"]])
-model_2020 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2020.summary())
-
-#2021 VOO Flow OLS
-
-Y = df_2021["flow_voo"]
-X = sm.add_constant(df_2021[["ASVI4_lag", "dlog_vix", "dy10"]])
-model_2021 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2021.summary())
-
-#2022 VOO Flow OLS
-
-Y = df_2022["flow_voo"]
-X = sm.add_constant(df_2022[["ASVI4_lag", "dlog_vix", "dy10"]])
-model_2022 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2022.summary())
-
-#2023 VOO Flow OLS
-
-Y = df_2023["flow_voo"]
-X = sm.add_constant(df_2023[["ASVI4_lag", "dlog_vix", "dy10"]])
-model_2023 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2023.summary())
-
-#Mag7 Returns VOO OLS 2016-2025
-
-Y = df["mag7_ret"]
-X = df[["flow_voo_lag", "dlog_vix", "dy10"]]
-X = sm.add_constant(X)
-
-model2 = sm.OLS(Y, X).fit(cov_type="HC3")
-print(model2.summary())
-
-#2020 Mag7 Ret VOO OLS
-
-Y = df_2020["mag7_ret"]
-X = sm.add_constant(df_2020[["flow_voo_lag", "dlog_vix", "dy10"]])
-model_2020 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2020.summary())
-
-#2021 Mag7 Ret VOO OLS
-
-Y = df_2021["mag7_ret"]
-X = sm.add_constant(df_2021[["flow_voo_lag", "dlog_vix", "dy10"]])
-model_2021 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2021.summary())
-
-#2022 Mag7 Ret VOO OLS
-
-Y = df_2022["mag7_ret"]
-X = sm.add_constant(df_2022[["flow_voo_lag", "dlog_vix", "dy10"]])
-model_2022 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2022.summary())
-
-#2023 Mag7 Ret VOO OLS
-
-Y = df_2023["mag7_ret"]
-X = sm.add_constant(df_2023[["flow_voo_lag", "dlog_vix", "dy10"]])
-model_2023 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2023.summary())
-
-#Mag7 Ret affected by ASVI?
-
-Y = df["mag7_ret"]
-X = sm.add_constant(df[["ASVI4_lag", "dlog_vix", "dy10"]])
-
-model = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model.summary())
-
-#2020 Mag7 Ret ASVI OLS
-
-Y = df_2020["mag7_ret"]
-X = sm.add_constant(df_2020[["ASVI4_lag", "dlog_vix", "dy10"]])
-model_2020 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2020.summary())
-
-#2021 Mag7 Ret ASVI OLS
-
-Y = df_2021["mag7_ret"]
-X = sm.add_constant(df_2021[["ASVI4_lag", "dlog_vix", "dy10"]])
-model_2021 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2021.summary())
-
-#2022 Mag7 Ret ASVI OLS
-
-Y = df_2022["mag7_ret"]
-X = sm.add_constant(df_2022[["ASVI4_lag", "dlog_vix", "dy10"]])
-model_2022 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2022.summary())
-
-#2023 Mag7 Ret ASVI OLS
-
-Y = df_2023["mag7_ret"]
-X = sm.add_constant(df_2023[["ASVI4_lag", "dlog_vix", "dy10"]])
-model_2023 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2023.summary())
-
-#SPY as dependent variable
-#2016-2025
-
-Y = df["flow_spy"]
-X = df[["ASVI8_lag", "dlog_vix", "dy10"]]
-X = sm.add_constant(X)
-
-model1 = sm.OLS(Y, X).fit(cov_type="HC3")
-print(model1.summary())
-
-#2020 Flow OLS
-
-Y = df_2020["flow_spy"]
-X = sm.add_constant(df_2020[["ASVI8_lag", "dlog_vix", "dy10"]])
-model_2020 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2020.summary())
-
-#2021 Flow OLS
-
-Y = df_2021["flow_spy"]
-X = sm.add_constant(df_2021[["ASVI8_lag", "dlog_vix", "dy10"]])
-model_2021 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2021.summary())
-
-#2022 Flow OLS
-
-Y = df_2022["flow_spy"]
-X = sm.add_constant(df_2022[["ASVI8_lag", "dlog_vix", "dy10"]])
-model_2022 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2022.summary())
-
-#2023 Flow OLS
-
-Y = df_2023["flow_spy"]
-X = sm.add_constant(df_2023[["ASVI8_lag", "dlog_vix", "dy10"]])
-model_2023 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2023.summary())
-
-#RSP as dependent variable
-#2016-2025
-
-Y = df["flow_rsp"]
-X = df[["ASVI8_lag", "dlog_vix", "dy10"]]
-X = sm.add_constant(X)
-
-model1 = sm.OLS(Y, X).fit(cov_type="HC3")
-print(model1.summary())
-
-#2020 RSP Flow OLS
-
-Y = df_2020["flow_rsp"]
-X = sm.add_constant(df_2020[["ASVI8_lag", "dlog_vix", "dy10"]])
-model_2020 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2020.summary())
-
-#2021 RSP Flow OLS
-
-Y = df_2021["flow_rsp"]
-X = sm.add_constant(df_2021[["ASVI8_lag", "dlog_vix", "dy10"]])
-model_2021 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2021.summary())
-
-#2022 RSP Flow OLS
-
-Y = df_2022["flow_rsp"]
-X = sm.add_constant(df_2022[["ASVI8_lag", "dlog_vix", "dy10"]])
-model_2022 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2022.summary())
-
-#2023 RSP Flow OLS
-
-Y = df_2023["flow_rsp"]
-X = sm.add_constant(df_2023[["ASVI8_lag", "dlog_vix", "dy10"]])
-model_2023 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2023.summary())
-
-#ASVI lagged Mag7_ret OLS 2016-2025
-
-Y = df["ASVI8"]
-
-X = df[["mag7_ret_lag", "dlog_vix", "dy10"]]
-X = sm.add_constant(X)
-
-model2 = sm.OLS(Y, X).fit(cov_type="HC3")
-print(model2.summary())
-
-#2020 ASVI lagged Mag7_ret OLS
-
-Y = df_2020["ASVI8"]
-X = sm.add_constant(df_2020[["mag7_ret_lag", "dlog_vix", "dy10"]])
-model_2020 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2020.summary())
-
-#2021 ASVI lagged Mag7_ret OLS
-
-Y = df_2021["ASVI8"]
-X = sm.add_constant(df_2021[["mag7_ret_lag", "dlog_vix", "dy10"]])
-model_2021 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2021.summary())
-
-#2022 ASVI lagged Mag7_ret OLS
-
-Y = df_2022["ASVI8"]
-X = sm.add_constant(df_2022[["mag7_ret_lag", "dlog_vix", "dy10"]])
-model_2022 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2022.summary())
-
-#2023 ASVI lagged Mag7_ret OLS
-
-Y = df_2023["ASVI8"]
-X = sm.add_constant(df_2023[["mag7_ret_lag", "dlog_vix", "dy10"]])
-model_2023 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2023.summary())
-
-#VOO as dependent variable
-#2016-2025
-
-Y = df["flow_voo"]
-
-X = df[["ASVI8_lag", "dlog_vix", "dy10"]]
-X = sm.add_constant(X)
-
-model1 = sm.OLS(Y, X).fit(cov_type="HC3")
-print(model1.summary())
-
-#2020 VOO Flow OLS
-
-Y = df_2020["flow_voo"]
-X = sm.add_constant(df_2020[["ASVI8_lag", "dlog_vix", "dy10"]])
-model_2020 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2020.summary())
-
-#2021 VOO Flow OLS
-
-Y = df_2021["flow_voo"]
-X = sm.add_constant(df_2021[["ASVI8_lag", "dlog_vix", "dy10"]])
-model_2021 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2021.summary())
-
-#2022 VOO Flow OLS
-
-Y = df_2022["flow_voo"]
-X = sm.add_constant(df_2022[["ASVI8_lag", "dlog_vix", "dy10"]])
-model_2022 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2022.summary())
-
-#2023 VOO Flow OLS
-
-Y = df_2023["flow_voo"]
-X = sm.add_constant(df_2023[["ASVI8_lag", "dlog_vix", "dy10"]])
-model_2023 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2023.summary())
-
-#Mag7 Ret affected by ASVI?
-
-Y = df["mag7_ret"]
-X = sm.add_constant(df[["ASVI8_lag", "dlog_vix", "dy10"]])
-
-model = sm.OLS(Y, X).fit(cov_type="HC3")
-print(model.summary())
-
-#2020 Mag7 Ret ASVI OLS
-
-Y = df_2020["mag7_ret"]
-X = sm.add_constant(df_2020[["ASVI8_lag", "dlog_vix", "dy10"]])
-model_2020 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2020.summary())
-
-#2021 Mag7 Ret ASVI OLS
-
-Y = df_2021["mag7_ret"]
-X = sm.add_constant(df_2021[["ASVI8_lag", "dlog_vix", "dy10"]])
-model_2021 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2021.summary())
-
-#2022 Mag7 Ret ASVI OLS
-
-Y = df_2022["mag7_ret"]
-X = sm.add_constant(df_2022[["ASVI8_lag", "dlog_vix", "dy10"]])
-model_2022 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2022.summary())
-
-#2023 Mag7 Ret ASVI OLS
-
-Y = df_2023["mag7_ret"]
-X = sm.add_constant(df_2023[["ASVI8_lag", "dlog_vix", "dy10"]])
-model_2023 = sm.OLS(Y, X).fit(cov_type="HC3")
-
-print(model_2023.summary())
+#year slices
+year_dfs = {
+    "2016_2025": df,
+    "2020":      df[df["date"] >= "2020-01-31"].copy(),
+    "2021":      df[df["date"] >= "2021-01-31"].copy(),
+    "2022":      df[df["date"] >= "2022-01-31"].copy(),
+    "2023":      df[df["date"] >= "2023-01-31"].copy(),
+}
+#model specifications: (label, y_col, x_cols)
+specs = [
+    # ASVI4 models
+    ("SPY_flow ~ ASVI4",        "flow_spy",  ["ASVI4_lag",    "dlog_vix", "dy10"]),
+    ("RSP_flow ~ ASVI4",        "flow_rsp",  ["ASVI4_lag",    "dlog_vix", "dy10"]),
+    ("VOO_flow ~ ASVI4",        "flow_voo",  ["ASVI4_lag",    "dlog_vix", "dy10"]),
+    ("mag7_ret ~ flow_spy",     "mag7_ret",  ["flow_spy_lag", "dlog_vix", "dy10"]),
+    ("mag7_ret ~ flow_rsp",     "mag7_ret",  ["flow_rsp_lag", "dlog_vix", "dy10"]),
+    ("mag7_ret ~ flow_voo",     "mag7_ret",  ["flow_voo_lag", "dlog_vix", "dy10"]),
+    ("mag7_ret ~ ASVI4",        "mag7_ret",  ["ASVI4_lag",    "dlog_vix", "dy10"]),
+    ("ASVI4 ~ mag7_ret",        "ASVI4",     ["mag7_ret_lag", "dlog_vix", "dy10"]),
+
+    # ASVI8 models
+    ("SPY_flow ~ ASVI8",        "flow_spy",  ["ASVI8_lag",    "dlog_vix", "dy10"]),
+    ("RSP_flow ~ ASVI8",        "flow_rsp",  ["ASVI8_lag",    "dlog_vix", "dy10"]),
+    ("VOO_flow ~ ASVI8",        "flow_voo",  ["ASVI8_lag",    "dlog_vix", "dy10"]),
+    ("mag7_ret ~ ASVI8",        "mag7_ret",  ["ASVI8_lag",    "dlog_vix", "dy10"]),
+    ("ASVI8 ~ mag7_ret",        "ASVI8",     ["mag7_ret_lag", "dlog_vix", "dy10"]),
+]
+
+#run and store models
+models = {}
+
+for label, y_col, x_cols in specs:
+    models[label] = {}
+    for year, data in year_dfs.items():
+        Y = data[y_col]
+        X = sm.add_constant(data[x_cols])
+        result = sm.OLS(Y, X).fit(cov_type="HC3")
+        models[label][year] = result
+
+        print(f"\n{'-'*60}")
+        print(f"  Model : {label}")
+        print(f"  Period: {year}")
+        print(f"{'-'*60}")
+        print(result.summary())
+
+#to query from another file:
+with open("models.pkl", "wb") as f:
+    pickle.dump(models, f)
+
+#uncomment to test if saved.
+#print("Models saved to models.pkl")
+
+
+
+# You can use these lines to access models in this file and view what you want 
+# by changing the specifications or duplicating lines.
+
+#reading a model later (ex: "SPY_flow ~ ASVI4", 2022):
+#print(models["SPY_flow ~ ASVI4"]["2022"].summary())
+
+# Get the 2022 SPY flow ~ ASVI4 model
+#m = models["SPY_flow ~ ASVI4"]["2022"]
+#print(m.params)      # coefficients, covered in summary but accessible individually
+#print(m.rsquared)    # R², covered in summary but accessible individually
+#print(m.pvalues)     # p-values, covered in summary but accessible individually
