@@ -21,7 +21,7 @@ Code for the master's thesis "The Diversification Paradox: Retail AI Narrative A
 
 Included (public):
 
-- Google Trends search volume for "AI Stocks", United States, monthly, retrieved with the pytrends library on [DATE]: `AIStocks_ASVI8_Monthly.csv`, `AIStocks_ASVI4_Monthly.csv`, and the raw index `AIStocks_SVI_raw_reconstructed.csv`, recovered from the ASVI8 file by inverting Equation (1) of the thesis.
+- Google Trends search volume for "AI Stocks", United States, monthly, retrieved with the pytrends library on Wednesday, 4 March 2026 at 20:01: `AIStocks_ASVI8_Monthly.csv`, `AIStocks_ASVI4_Monthly.csv`, and the raw index `AIStocks_SVI_raw_reconstructed.csv`, recovered from the ASVI8 file by inverting Equation (1) of the thesis.
 - 10-year US Treasury constant maturity yield from FRED (series DGS10): `dgs10_clean.csv`.
 
 Not included (licensed through WRDS):
@@ -41,5 +41,8 @@ Users with WRDS access can rebuild these files with the notebooks in `data_prepa
 Do not rerun the Google Trends notebooks in `data_preparation/`. Google Trends draws a new sample of searches for each download, so a new download gives slightly different numbers.
 
 ## Software
-
-Python [VERSION], pandas [VERSION], numpy [VERSION], statsmodels [VERSION], matplotlib [VERSION].
+Python 3.13.9
+pandas 2.3.3
+numpy 2.3.5
+statsmodels 0.14.5
+matplotlib 3.10.6
