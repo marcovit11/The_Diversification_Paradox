@@ -1,0 +1,21 @@
+Fund,Sample,Shock,h=1,h=6,h=12
+RSP,Full sample,dlogVIX,28.0,27.1,27.0
+RSP,Full sample,dy10,2.2,2.3,2.3
+RSP,Full sample,ASVI8,1.9,4.6,4.8
+RSP,Full sample,Flow RSP,0.0,0.5,0.5
+RSP,Full sample,Mag7 returns,67.8,65.5,65.3
+RSP,2021-2025,dlogVIX,24.9,23.3,23.1
+RSP,2021-2025,dy10,7.5,6.9,6.8
+RSP,2021-2025,ASVI8,3.3,10.1,11.1
+RSP,2021-2025,Flow RSP,0.0,0.4,0.5
+RSP,2021-2025,Mag7 returns,64.4,59.3,58.5
+VOO,Full sample,dlogVIX,28.2,27.3,27.3
+VOO,Full sample,dy10,2.3,2.4,2.4
+VOO,Full sample,ASVI8,1.9,4.5,4.8
+VOO,Full sample,Flow VOO,1.0,1.2,1.2
+VOO,Full sample,Mag7 returns,66.5,64.6,64.4
+VOO,2021-2025,dlogVIX,22.3,21.7,21.7
+VOO,2021-2025,dy10,7.7,7.0,6.9
+VOO,2021-2025,ASVI8,4.8,10.0,10.7
+VOO,2021-2025,Flow VOO,0.8,3.4,3.5
+VOO,2021-2025,Mag7 returns,64.3,57.9,57.1
