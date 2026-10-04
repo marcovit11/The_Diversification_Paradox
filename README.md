@@ -15,7 +15,6 @@ Code for the master's thesis "The Diversification Paradox: Retail AI Narrative A
 | `Baseline OLS Merged-2.ipynb` | Baseline OLS regressions with HC3 standard errors | Table 2 |
 | `data_preparation/` | Notebooks that build the clean monthly CSV files from the raw downloads | |
 | `appendix_output/` | Tables (CSV) and figures (PNG) written by notebook 5 | |
-| `Code PDFs/` | PDF exports of the executed notebooks | |
 
 ## Data
 
