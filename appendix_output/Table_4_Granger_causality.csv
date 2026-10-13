@@ -1,0 +1,7 @@
+Null hypothesis,F (Full sample),p (Full sample),F (2021-2025),p (2021-2025)
+ASVI8 does not cause Mag7 returns,4.625**,0.032,5.500**,0.020
+ASVI8 does not cause Flow SPY,1.577,0.210,0.776,0.379
+Flow SPY does not cause Mag7 returns,0.001,0.976,0.156,0.693
+Mag7 returns do not cause ASVI8,1.705,0.192,0.433,0.511
+dlogVIX does not cause Mag7 returns,1.043,0.307,0.007,0.933
+dDGS10 does not cause Mag7 returns,0.272,0.603,0.033,0.856
